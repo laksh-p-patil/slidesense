@@ -13,6 +13,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var mediaStripEnabled: Bool = true
     public var mediaStripReverse: Bool = false
     public var quickMuteEnabled: Bool = true
+    public var keyboardBacklightTapEnabled: Bool = true
     public var tapToPlayEnabled: Bool = false
     public var requireModifier: ModifierRequirement = .none
     public var fineControlWithModifiers: Bool = true
@@ -27,6 +28,7 @@ public enum MediaCommand: Sendable, Equatable {
     case next
     case previous
     case mute
+    case keyboardBacklight
 }
 
 public protocol SlideEngineDelegate: AnyObject {
@@ -54,6 +56,7 @@ public final class SlideEngine {
         case slider(target: EdgeAction, edge: Edge, startLevel: Double)
         case media
         case corner
+        case backlightCorner
         case ignored
     }
 
@@ -74,6 +77,7 @@ public final class SlideEngine {
 
     private var gesture: Gesture?
     private var lastCornerTap: TimeInterval = -10
+    private var lastBacklightTap: TimeInterval = -10
     private var lastMediaTap: TimeInterval = -10
 
     public init() {}
@@ -145,6 +149,11 @@ public final class SlideEngine {
             return
         }
 
+        if config.keyboardBacklightTapEnabled, geometry.isBacklightCorner(point) {
+            gesture = makeGesture(kind: .backlightCorner, point: point, now: now, level: 0, fine: fine, config: config)
+            return
+        }
+
         guard let edge = geometry.edge(at: point) else {
             gesture = makeGesture(kind: .ignored, point: point, now: now, level: 0, fine: fine, config: config)
             return
@@ -188,6 +197,18 @@ public final class SlideEngine {
             return
         }
 
+        // Same idea for the top-left corner: sliding from it is a left-edge slide.
+        if case .backlightCorner = gesture.kind, abs(dy) > 0.035 {
+            let target = config.leftEdge
+            let level = target == .volume ? config.currentVolume : config.currentBrightness
+            let steps = isFine(config: config) ? 64.0 : 16.0
+            gesture.kind = .slider(target: target, edge: .left, startLevel: level)
+            gesture.emittedLevel = (level * steps).rounded() / steps
+            gesture.lastStep = Int((level * steps).rounded())
+            update(&gesture, point: point, now: now, config: config)
+            return
+        }
+
         switch gesture.kind {
         case let .slider(target, edge, startLevel):
             guard abs(dy) > 0.006 else { return }
@@ -225,7 +246,7 @@ public final class SlideEngine {
             if config.mediaStripReverse { forward.toggle() }
             delegate?.slideEngine(self, didRecognize: forward ? .next : .previous)
 
-        case .corner, .ignored:
+        case .corner, .backlightCorner, .ignored:
             break
         }
     }
@@ -261,12 +282,24 @@ public final class SlideEngine {
                 }
             }
 
+        case .backlightCorner:
+            if isTap {
+                if now - lastBacklightTap < 0.45 {
+                    lastBacklightTap = -10
+                    delegate?.slideEngine(self, didRecognize: .keyboardBacklight)
+                } else {
+                    lastBacklightTap = now
+                }
+            }
+
         case .ignored:
             break
         }
     }
 
     private func cancel(_ gesture: Gesture) {
+        if case .backlightCorner = gesture.kind {
+        }
         if case let .slider(target, _, _) = gesture.kind, gesture.moved {
             delegate?.slideEngine(self, didEndSlide: target, level: gesture.emittedLevel)
         }

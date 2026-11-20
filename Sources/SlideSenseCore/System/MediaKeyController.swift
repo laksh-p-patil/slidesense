@@ -15,6 +15,7 @@ public final class MediaKeyController {
         case brightnessUp
         case brightnessDown
         case mute
+        case keyboardBacklightToggle
     }
 
     // NX_KEYTYPE_* values from IOKit/hidsystem/ev_keymap.h.
@@ -24,6 +25,7 @@ public final class MediaKeyController {
         case brightnessUp = 2
         case brightnessDown = 3
         case mute = 7
+        case illuminationToggle = 23
         case play = 16
         case next = 17
         case previous = 18
@@ -41,6 +43,7 @@ public final class MediaKeyController {
         case .brightnessUp: press(.brightnessUp)
         case .brightnessDown: press(.brightnessDown)
         case .mute: press(.mute)
+        case .keyboardBacklightToggle: press(.illuminationToggle)
         }
     }
 

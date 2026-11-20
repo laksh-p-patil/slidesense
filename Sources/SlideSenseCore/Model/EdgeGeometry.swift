@@ -64,6 +64,14 @@ public struct EdgeGeometry: Sendable {
         return x >= 1 - cornerSize && y >= 1 - cornerSize
     }
 
+    /// The top-left corner region used for the keyboard backlight toggle.
+    public func isBacklightCorner(_ point: CGPoint) -> Bool {
+        let x = Double(point.x)
+        let y = Double(point.y)
+        let size = max(cornerSize, 0.22)
+        return x <= size && y >= 1 - size
+    }
+
     /// The span of trackpad travel that maps onto a full 0…1 change.
     public func travelSpan(for edge: Edge) -> Double {
         switch edge {

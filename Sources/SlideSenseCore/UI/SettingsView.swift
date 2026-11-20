@@ -222,6 +222,17 @@ struct SettingsTabContent: View {
             }
 
             Section {
+                Toggle("Double-Tap Top Left", isOn: $store.settings.keyboardBacklightTapEnabled)
+                    .toggleStyle(.switch)
+            } header: {
+                Text("Keyboard Backlight")
+            } footer: {
+                Text("Toggles the keyboard backlight when you double-tap the top-left corner of the trackpad.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Toggle("Show Media Strip", isOn: $store.settings.mediaStripEnabled)
                     .toggleStyle(.switch)
                 Toggle("Reverse Swipe", isOn: $store.settings.mediaStripReverse)

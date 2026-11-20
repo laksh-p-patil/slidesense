@@ -179,6 +179,7 @@ public final class AppCoordinator: NSObject, StatusItemDataSource {
         new.mediaStripEnabled = settings.mediaStripEnabled
         new.mediaStripReverse = settings.mediaStripReverse
         new.quickMuteEnabled = settings.quickMuteEnabled
+        new.keyboardBacklightTapEnabled = settings.keyboardBacklightTapEnabled
         new.tapToPlayEnabled = settings.tapToPlayEnabled
         new.requireModifier = settings.requireModifier
         new.fineControlWithModifiers = settings.fineControlWithModifiers
@@ -426,6 +427,14 @@ extension AppCoordinator: SlideEngineDelegate {
             case .previous:
                 MediaKeyController.shared.send(.previous)
                 self.hud.showMedia(.previous)
+            case .keyboardBacklight:
+                let toggled = KeyboardBacklightController.shared?.toggle() ?? false
+                if !toggled {
+                    MediaKeyController.shared.send(.keyboardBacklightToggle)
+                }
+                if self.hapticsEnabled {
+                    Haptics.shared.buzz(self.hapticStrength)
+                }
             case .mute:
                 self.audio.toggleMute()
                 if self.hapticsEnabled {
