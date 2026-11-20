@@ -77,8 +77,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
-echo "==> Signing (ad-hoc, no identity)"
-codesign --force --sign - --timestamp=none "$APP" >/dev/null 2>&1 || {
+SIGN_IDENTITY="${SIGN_IDENTITY:--}"
+if [ "$SIGN_IDENTITY" = "-" ]; then
+    echo "==> Signing (ad-hoc, no identity)"
+else
+    echo "==> Signing with identity: $SIGN_IDENTITY"
+fi
+codesign --force --sign "$SIGN_IDENTITY" --timestamp=none "$APP" >/dev/null 2>&1 || {
     echo "warning: ad-hoc codesigning failed; the app may still run" >&2
 }
 

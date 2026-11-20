@@ -180,6 +180,7 @@ public final class AppCoordinator: NSObject, StatusItemDataSource {
         new.mediaStripReverse = settings.mediaStripReverse
         new.quickMuteEnabled = settings.quickMuteEnabled
         new.keyboardBacklightTapEnabled = settings.keyboardBacklightTapEnabled
+        new.bottomScrollEnabled = settings.bottomScrollEnabled
         new.tapToPlayEnabled = settings.tapToPlayEnabled
         new.requireModifier = settings.requireModifier
         new.fineControlWithModifiers = settings.fineControlWithModifiers
@@ -212,7 +213,7 @@ public final class AppCoordinator: NSObject, StatusItemDataSource {
             engine.reset()
         }
 
-        if settings.mediaStripEnabled {
+        if settings.mediaStripEnabled || settings.bottomScrollEnabled {
             promptForAccessibilityIfNeeded()
         }
 
@@ -228,7 +229,8 @@ public final class AppCoordinator: NSObject, StatusItemDataSource {
     private var didPromptForAccessibility = false
 
     private func promptForAccessibilityIfNeeded() {
-        guard store.settings.mediaStripEnabled, !AccessibilityPermission.isTrusted else { return }
+        guard store.settings.mediaStripEnabled || store.settings.bottomScrollEnabled,
+              !AccessibilityPermission.isTrusted else { return }
         guard !didPromptForAccessibility else { return }
         didPromptForAccessibility = true
         AccessibilityPermission.requestIfNeeded()
@@ -407,6 +409,10 @@ extension AppCoordinator: SlideEngineDelegate {
             self?.statusItem?.refresh()
             self?.refreshSnapshot()
         }
+    }
+
+    public func slideEngine(_ engine: SlideEngine, didScrollBy delta: Double) {
+        ScrollController.shared.scroll(byPadWidths: delta)
     }
 
     public func slideEngine(_ engine: SlideEngine, didTick target: EdgeAction, level: Double) {

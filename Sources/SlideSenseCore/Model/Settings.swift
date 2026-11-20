@@ -105,6 +105,7 @@ public struct Settings: Codable, Equatable, Sendable {
     // Extras
     public var quickMuteEnabled: Bool = true
     public var keyboardBacklightTapEnabled: Bool = true
+    public var bottomScrollEnabled: Bool = true
     public var mediaStripEnabled: Bool = true
     public var mediaStripReverse: Bool = false
     public var tapToPlayEnabled: Bool = false
@@ -142,6 +143,7 @@ public struct Settings: Codable, Equatable, Sendable {
         hapticStrength = try c.decodeIfPresent(HapticStrength.self, forKey: .hapticStrength) ?? d.hapticStrength
         quickMuteEnabled = try c.decodeIfPresent(Bool.self, forKey: .quickMuteEnabled) ?? d.quickMuteEnabled
         keyboardBacklightTapEnabled = try c.decodeIfPresent(Bool.self, forKey: .keyboardBacklightTapEnabled) ?? d.keyboardBacklightTapEnabled
+        bottomScrollEnabled = try c.decodeIfPresent(Bool.self, forKey: .bottomScrollEnabled) ?? d.bottomScrollEnabled
         mediaStripEnabled = try c.decodeIfPresent(Bool.self, forKey: .mediaStripEnabled) ?? d.mediaStripEnabled
         mediaStripReverse = try c.decodeIfPresent(Bool.self, forKey: .mediaStripReverse) ?? d.mediaStripReverse
         tapToPlayEnabled = try c.decodeIfPresent(Bool.self, forKey: .tapToPlayEnabled) ?? d.tapToPlayEnabled

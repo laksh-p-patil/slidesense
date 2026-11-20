@@ -233,6 +233,17 @@ struct SettingsTabContent: View {
             }
 
             Section {
+                Toggle("Scroll Strip", isOn: $store.settings.bottomScrollEnabled)
+                    .toggleStyle(.switch)
+            } header: {
+                Text("Scroll Strip")
+            } footer: {
+                Text("Slide a finger left or right along the bottom edge to scroll the page under the pointer. Sliding right scrolls down. This replaces the Media Strip while it is on.")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+            }
+
+            Section {
                 Toggle("Show Media Strip", isOn: $store.settings.mediaStripEnabled)
                     .toggleStyle(.switch)
                 Toggle("Reverse Swipe", isOn: $store.settings.mediaStripReverse)

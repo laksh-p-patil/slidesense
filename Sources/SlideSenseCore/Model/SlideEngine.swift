@@ -14,6 +14,7 @@ public struct EngineConfiguration: Equatable, Sendable {
     public var mediaStripReverse: Bool = false
     public var quickMuteEnabled: Bool = true
     public var keyboardBacklightTapEnabled: Bool = true
+    public var bottomScrollEnabled: Bool = true
     public var tapToPlayEnabled: Bool = false
     public var requireModifier: ModifierRequirement = .none
     public var fineControlWithModifiers: Bool = true
@@ -38,6 +39,12 @@ public protocol SlideEngineDelegate: AnyObject {
     /// Fired once every time the level crosses a haptic step.
     func slideEngine(_ engine: SlideEngine, didTick target: EdgeAction, level: Double)
     func slideEngine(_ engine: SlideEngine, didRecognize command: MediaCommand)
+    /// Horizontal finger travel along the bottom strip, in trackpad widths.
+    func slideEngine(_ engine: SlideEngine, didScrollBy delta: Double)
+}
+
+public extension SlideEngineDelegate {
+    func slideEngine(_ engine: SlideEngine, didScrollBy delta: Double) {}
 }
 
 /// Turns raw contact frames into edge-slide gestures.
@@ -57,6 +64,7 @@ public final class SlideEngine {
         case media
         case corner
         case backlightCorner
+        case scrollStrip
         case ignored
     }
 
@@ -73,6 +81,8 @@ public final class SlideEngine {
         var lastStep: Int
         var consumed: Bool
         var lostFrames: Int
+        /// Where the finger was on the previous frame (used by the scroll strip).
+        var anchor: Double = 0
     }
 
     private var gesture: Gesture?
@@ -86,6 +96,7 @@ public final class SlideEngine {
     public var isTrackingSlide: Bool {
         guard let gesture else { return false }
         if case .slider = gesture.kind { return gesture.moved }
+        if case .scrollStrip = gesture.kind { return gesture.moved }
         return false
     }
 
@@ -161,6 +172,12 @@ public final class SlideEngine {
 
         switch edge {
         case .bottom:
+            if config.bottomScrollEnabled {
+                var scroll = makeGesture(kind: .scrollStrip, point: point, now: now, level: 0, fine: fine, config: config)
+                scroll.anchor = point.x
+                gesture = scroll
+                return
+            }
             guard config.mediaStripEnabled else {
                 gesture = makeGesture(kind: .ignored, point: point, now: now, level: 0, fine: fine, config: config)
                 return
@@ -246,6 +263,14 @@ public final class SlideEngine {
             if config.mediaStripReverse { forward.toggle() }
             delegate?.slideEngine(self, didRecognize: forward ? .next : .previous)
 
+        case .scrollStrip:
+            // Ignore tiny jitter until the finger has really started sliding.
+            if !gesture.moved, abs(point.x - gesture.startX) < 0.012 { return }
+            gesture.moved = true
+            let delta = point.x - gesture.anchor
+            gesture.anchor = point.x
+            if delta != 0 { delegate?.slideEngine(self, didScrollBy: delta) }
+
         case .corner, .backlightCorner, .ignored:
             break
         }
@@ -291,6 +316,9 @@ public final class SlideEngine {
                     lastBacklightTap = now
                 }
             }
+
+        case .scrollStrip:
+            break
 
         case .ignored:
             break
